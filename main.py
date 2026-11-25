@@ -1,22 +1,31 @@
 #!/usr/bin/env python3
-"""make.fun entry for news-image-20261124.
+"""Copy the finished front page into the make.fun output directory.
 
-Copies the finished front-page image (entry.png, drawn by draw_image.py and
-shipped in this repository) to $MAKEFUN_OUTPUT_DIR/entry.png.
-Standard library only, no network, deterministic: the output bytes are
-exactly the asset's bytes on every run.
+Standard library only, no network. Deterministic: the output file is a
+byte-for-byte copy of entry.png, so repeated runs are identical.
 """
 import os
 import shutil
-from pathlib import Path
+import sys
 
 
-def main() -> None:
-    out_dir = Path(os.environ.get("MAKEFUN_OUTPUT_DIR", "/output"))
-    out_dir.mkdir(parents=True, exist_ok=True)
-    src = Path(__file__).resolve().parent / "entry.png"
-    shutil.copyfile(src, out_dir / "entry.png")
+def main():
+    here = os.path.dirname(os.path.abspath(__file__))
+    src = os.path.join(here, "entry.png")
+    if not os.path.isfile(src):
+        print("error: entry.png not found next to main.py; "
+              "run `python3 draw_image.py` first", file=sys.stderr)
+        return 1
+    out_dir = os.environ.get("MAKEFUN_OUTPUT_DIR", "/output")
+    os.makedirs(out_dir, exist_ok=True)
+    dst = os.path.join(out_dir, "entry.png")
+    if os.path.abspath(src) == os.path.abspath(dst):
+        print("entry.png is already in place:", dst)
+        return 0
+    shutil.copyfile(src, dst)
+    print("wrote", dst)
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())
